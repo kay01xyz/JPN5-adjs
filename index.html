@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日語形容詞變化練習</title>
+    <style>
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "メイリオ", sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        button {
+            font-size: 1em;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .type {
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .cell {
+            border: 1px solid #888;
+            padding: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+        }
+        .cell input {
+            width: 60%;
+            padding: 3px;
+            font-size: 0.9em;
+        }
+        .title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            background-color: #f0f0f0;
+            padding: 3px;
+            font-size: 0.9em;
+        }
+        .meaning {
+            color: #666;
+            font-size: 0.8em;
+        }
+        .check-button {
+            margin-top: 5px;
+        }
+        .correct {
+            background-color: #e6ffe6;
+        }
+        .incorrect {
+            background-color: #ffe6e6;
+        }
+        @media print {
+            .controls {
+                display: none;
+            }
+            .type {
+                page-break-inside: avoid;
+                margin: 5px 0;
+                padding: 5px;
+            }
+            body {
+                padding: 0;
+            }
+            .cell {
+                padding: 3px;
+            }
+        }
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .cell {
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="generateWorksheet()">生成新題目</button>
+        <button onclick="checkAnswers()">檢查答案</button>
+        <button onclick="toggleAnswers()" id="answerToggle">顯示答案</button>
+        <button onclick="window.print()">列印</button>
+    </div>
+    <div id="content"></div>
+
+<script>
+const adjectives = {
+    i: [
+        {
+            kana: 'おいしい',
+            kanji: '美味しい',
+            meaning: '美味',
+            conjugations: {
+                plain: {
+                    positive: 'おいしい',
+                    negative: 'おいしくない',
+                    pastPositive: 'おいしかった',
+                    pastNegative: 'おいしくなかった'
+                },
+                polite: {
+                    positive: 'おいしいです',
+                    negative: 'おいしくないです',
+                    pastPositive: 'おいしかったです',
+                    pastNegative: 'おいしくなかったです'
+                }
+            }
+        },
+        {
+            kana: 'かわいい',
+            kanji: '可愛い',
+            meaning: '可愛',
+            conjugations: {
+                plain: {
+                    positive: 'かわいい',
+                    negative: 'かわいくない',
+                    pastPositive: 'かわいかった',
+                    pastNegative: 'かわいくなかった'
+                },
+                polite: {
+                    positive: 'かわいいです',
+                    negative: 'かわいくないです',
+                    pastPositive: 'かわいかったです',
+                    pastNegative: 'かわいくなかったです'
+                }
+            }
+        },
+        {
+            kana: 'おおきい',
+            kanji: '大きい',
+            meaning: '大',
+            conjugations: {
+                plain: {
+                    positive: 'おおきい',
+                    negative: 'おおきくない',
+                    pastPositive: 'おおきかった',
+                    pastNegative: 'おおきくなかった'
+                },
+                polite: {
+                    positive: 'おおきいです',
+                    negative: 'おおきくないです',
+                    pastPositive: 'おおきかったです',
+                    pastNegative: 'おおきくなかったです'
+                }
+            }
+        },
+        {
+            kana: 'ちいさい',
+            kanji: '小さい',
+            meaning: '小',
+            conjugations: {
+                plain: {
+                    positive: 'ちいさい',
+                    negative: 'ちいさくない',
+                    pastPositive: 'ちいさかった',
+                    pastNegative: 'ちいさくなかった'
+                },
+                polite: {
+                    positive: 'ちいさいです',
+                    negative: 'ちいさくないです',
+                    pastPositive: 'ちいさかったです',
+                    pastNegative: 'ちいさくなかったです'
+                }
+            }
+        },
+        {
+            kana: 'あつい',
+            kanji: '暑い',
+            meaning: '熱（天氣）',
+            conjugations: {
+                plain: {
+                    positive: 'あつい',
+                    negative: 'あつくない',
+                    pastPositive: 'あつかった',
+                    pastNegative: 'あつくなかった'
+                },
+                polite: {
+                    positive: 'あついです',
+                    negative: 'あつくないです',
+                    pastPositive: 'あつかったです',
+                    pastNegative: 'あつくなかったです'
+                }
+            }
+        },
+        {
+            kana: 'さむい',
+            kanji: '寒い',
+            meaning: '寒冷',
+            conjugations: {
+                plain: {
+                    positive: 'さむい',
+                    negative: 'さむくない',
+                    pastPositive: 'さむかった',
+                    pastNegative: 'さむくなかった'
+                },
+                polite: {
+                    positive: 'さむいです',
+                    negative: 'さむくないです',
+                    pastPositive: 'さむかったです',
+                    pastNegative: 'さむくなかったです'
+                }
+            }
+        },
+        {
+            kana: 'むずかしい',
+            kanji: '難しい',
+            meaning: '難',
+            conjugations: {
+                plain: {
+                    positive: 'むずかしい',
+                    negative: 'むずかしくない',
+                    pastPositive: 'むずかしかった',
+                    pastNegative: 'むずかしくなかった'
+                },
+                polite: {
+                    positive: 'むずかしいです',
+                    negative: 'むずかしくないです',
+                    pastPositive: 'むずかしかったです',
+                    pastNegative: 'むずかしくなかったです'
+                }
+            }
+        },
+        {
+            kana: 'やさしい',
+            kanji: '易しい',
+            meaning: '容易',
+            conjugations: {
+                plain: {
+                    positive: 'やさしい',
+                    negative: 'やさしくない',
+                    pastPositive: 'やさしかった',
+                    pastNegative: 'やさしくなかった'
+                },
+                polite: {
+                    positive: 'やさしいです',
+                    negative: 'やさしくないです',
+                    pastPositive: 'やさしかったです',
+                    pastNegative: 'やさしくなかったです'
+                }
+            }
+        },
+        {
+            kana: 'たのしい',
+            kanji: '楽しい',
+            meaning: '快樂',
+            conjugations: {
+                plain: {
+                    positive: 'たのしい',
+                    negative: 'たのしくない',
+                    pastPositive: 'たのしかった',
+                    pastNegative: 'たのしくなかった'
+                },
+                polite: {
+                    positive: 'たのしいです',
+                    negative: 'たのしくないです',
+                    pastPositive: 'たのしかったです',
+                    pastNegative: 'たのしくなかったです'
+                }
+            }
+        },
+        {
+            kana: 'さびしい',
+            kanji: '寂しい',
+            meaning: '寂寞',
+            conjugations: {
+                plain: {
+                    positive: 'さびしい',
+                    negative: 'さびしくない',
+                    pastPositive: 'さびしかった',
+                    pastNegative: 'さびしくなかった'
+                },
+                polite: {
+                    positive: 'さびしいです',
+                    negative: 'さびしくないです',
+                    pastPositive: 'さびしかったです',
+                    pastNegative: 'さびしくなかったです'
+                }
+            }
+        }
+    ],
+    na: [
+        {
+            kana: 'きれい',
+            kanji: '綺麗',
+            meaning: '漂亮',
+            conjugations: {
+                plain: {
+                    positive: 'きれいだ',
+                    negative: 'きれいじゃない',
+                    pastPositive: 'きれいだった',
+                    pastNegative: 'きれいじゃなかった'
+                },
+                polite: {
+                    positive: 'きれいです',
+                    negative: 'きれいじゃないです',
+                    pastPositive: 'きれいでした',
+                    pastNegative: 'きれいじゃなかったです'
+                }
+            }
+        },
+        {
+            kana: 'しずか',
+            kanji: '静か',
+            meaning: '安靜',
+            conjugations: {
+                plain: {
+                    positive: 'しずかだ',
+                    negative: 'しずかじゃない',
+                    pastPositive: 'しずかだった',
+                    pastNegative: 'しずかじゃなかった'
+                },
+                polite: {
+                    positive: 'しずかです',
+                    negative: 'しずかじゃないです',
+                    pastPositive: 'しずかでした',
+                    pastNegative: 'しずかじゃなかったです'
+                }
+            }
+        },
+        {
+            kana: 'げんき',
+            kanji: '元気',
+            meaning: '精神好',
+            conjugations: {
+                plain: {
+                    positive: 'げんきだ',
+                    negative: 'げんきじゃない',
+                    pastPositive: 'げんきだった',
+                    pastNegative: 'げんきじゃなかった'
+                },
+                polite: {
+                    positive: 'げんきです',
+                    negative: 'げんきじゃないです',
+                    pastPositive: 'げんきでした',
+                    pastNegative: 'げんきじゃなかったです'
+                }
+            }
+        }
+    ]
+};
+
+const ii = {
+    kana: 'いい',
+    kanji: 'いい',
+    meaning: '好',
+    conjugations: {
+        plain: {
+            positive: 'いい',
+            negative: 'よくない',
+            pastPositive: 'よかった',
+            pastNegative: 'よくなかった'
+        },
+        polite: {
+            positive: 'いいです',
+            negative: 'よくないです',
+            pastPositive: 'よかったです',
+            pastNegative: 'よくなかったです'
+        }
+    }
+};
+
+let answersShown = false;
+let savedValues = [];
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+function generateGrid(title, adj, isPolite) {
+    const mode = isPolite ? 'polite' : 'plain';
+    const id = Math.random().toString(36).substring(7);
+    return `
+        <div class="type">
+            <div class="title">${title} - ${adj.kanji}（${adj.kana}）<span class="meaning">【${adj.meaning}】</span></div>
+            <div class="grid" data-id="${id}">
+                <div class="cell">
+                    <span>肯定</span>
+                    <input type="text" data-answer="${adj.conjugations[mode].positive}">
+                </div>
+                <div class="cell">
+                    <span>否定</span>
+                    <input type="text" data-answer="${adj.conjugations[mode].negative}">
+                </div>
+                <div class="cell">
+                    <span>過去肯定</span>
+                    <input type="text" data-answer="${adj.conjugations[mode].pastPositive}">
+                </div>
+                <div class="cell">
+                    <span>過去否定</span>
+                    <input type="text" data-answer="${adj.conjugations[mode].pastNegative}">
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function generateWorksheet() {
+    let content = '';
+    const selectedI = shuffle([...adjectives.i]).slice(0, 8);
+    const selectedNa = shuffle([...adjectives.na]).slice(0, 4);
+    
+    selectedI.forEach(adj => {
+        content += generateGrid(`i形容詞 普通形`, adj, false);
+        content += generateGrid(`i形容詞 敬體`, adj, true);
+    });
+    
+    selectedNa.forEach(adj => {
+        content += generateGrid(`na形容詞 普通形`, adj, false);
+        content += generateGrid(`na形容詞 敬體`, adj, true);
+    });
+    
+    content += generateGrid(`いい 普通形`, ii, false);
+    content += generateGrid(`いい 敬體`, ii, true);
+    
+    document.getElementById('content').innerHTML = content;
+    answersShown = false;
+    document.getElementById('answerToggle').textContent = '顯示答案';
+}
+
+function checkAnswers() {
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        const correct = input.value === input.dataset.answer;
+        input.classList.remove('correct', 'incorrect');
+        input.classList.add(correct ? 'correct' : 'incorrect');
+    });
+}
+
+function toggleAnswers() {
+    const inputs = document.querySelectorAll('input');
+    const toggleButton = document.getElementById('answerToggle');
+    
+    if (!answersShown) {
+        // 保存當前的輸入值
+        savedValues = Array.from(inputs).map(input => input.value);
+        
+        // 顯示答案
+        inputs.forEach(input => {
+            input.value = input.dataset.answer;
+            input.classList.remove('incorrect');
+            input.classList.add('correct');
+        });
+        toggleButton.textContent = '隱藏答案';
+    } else {
+        // 恢復之前的輸入值
+        inputs.forEach((input, index) => {
+            input.value = savedValues[index];
+            input.classList.remove('correct', 'incorrect');
+        });
+        toggleButton.textContent = '顯示答案';
+    }
+    
+    answersShown = !answersShown;
+}
+
+// 初始生成練習題
+generateWorksheet();
+</script>
+</body>
+</html>
